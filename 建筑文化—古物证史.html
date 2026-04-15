@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>文物展示网页</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+	  font-family: "agency fb","隶书",sans-serif;
+    }
+
+    body {
+     background-image: url("img/a明故宫内页.png");
+     background-size: cover;
+     background-position: center;
+     background-attachment: fixed;
+      color: #3b2f2f;
+      /* min-height: 100vh; */
+	   /* overflow: hidden; */ 
+	   height: 100vh; 
+    }
+
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      letter-spacing: 3px;
+      color: #7a3e1d;
+	  font-size: 80px;
+	  font-weight: 400;
+	  margin-bottom: 1px;
+	  font-family: "agency fb","隶书";
+    }
+
+    .header p {
+      color: #7d6a58;
+      font-size: 16px;
+    }
+
+    .main {
+		margin-bottom: 100px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .left-panel {
+		margin-top: -40px;
+      width: 60%;
+      /* background: rgba(255, 255, 255, 0.72); */
+      /* border: 1px solid rgba(122, 62, 29, 0.12); */
+      border-radius: 24px;
+      padding: 24px;
+      /* box-shadow: 0 12px 30px rgba(92, 55, 27, 0.1);
+      backdrop-filter: blur(6px); */
+    }
+
+    .post-card {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .switch-bar {
+      display: none;
+    }
+
+    .arrow-btn {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: #fff4e6;
+      color: #7a3e1d;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .arrow-btn:hover {
+      transform: translateY(-1px);
+      background: #fde7cb;
+    }
+
+    .artifact-copy {
+		width: 102%;
+      /* background: url(img/38.png);
+      background-size: 100% 100%; */
+      /* border-radius: 18px; */
+      padding: 20px;
+      line-height: 1.9;
+      font-size: 17px;
+      /* border: 1px solid #eadcc8; */
+      height: 120px;
+	  
+    }
+
+    .artifact-image-wrap {
+      border-radius: 22px;
+      background: #f7ecda;
+      border: 1px solid #eadcc8;
+      width: 60%;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .artifact-image-wrap img {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 16px 8px 4px;
+      font-size: 18px;
+      color: #765841;
+      /* border-top: 1px solid #eadcc8; */
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #765841;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+      color: #8d4d22;
+    }
+
+    .heart {
+      font-size: 24px;
+      color: #ffffff;
+      text-shadow:
+        -1px -1px 0 #9b6c53,
+         1px -1px 0 #9b6c53,
+        -1px  1px 0 #9b6c53,
+         1px  1px 0 #9b6c53;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .heart.liked {
+      color: #e63946;
+      text-shadow: none;
+    }
+
+    .divider {
+      color: #c6ab90;
+    }
+
+    .comment-box {
+      display: block;
+      margin-top: 6px;
+      background: #fff8ef;
+      border-left: 4px solid #c48346;
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: #6e4b34;
+      min-height: 96px;
+    }
+
+    .comment-empty {
+      color: #9b7e64;
+      font-size: 15px;
+    }
+
+    .comment-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #eadcc8;
+    }
+
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+
+    .comment-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+
+    .comment-content {
+      flex: 1;
+    }
+
+    .comment-name {
+      font-size: 14px;
+      color: #8b5c3a;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .comment-text {
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .comment-input-row {
+      display: flex;
+      margin-top: 10px;
+      gap: 10px;
+    }
+
+    .comment-input-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #d8c2aa;
+      outline: none;
+      font-size: 14px;
+      background: #fffdf9;
+    }
+
+    .send-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #7a3e1d;
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .right-panel {
+		margin-top: -10px;
+      width: 40%;
+      /* background: rgba(122, 62, 29, 0.92); */
+      color: #aa5500;
+      border-radius: 24px;
+	  
+      padding:50px 20px 30px 20px;
+      /* box-shadow: 0 14px 32px rgba(72, 35, 15, 0.18); */
+      display: flex;
+      flex-direction: column;
+      /* justify-content: center; */
+      align-items: center;
+      position: relative;
+      /* overflow: hidden; */
+    }
+
+    .right-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      /* background: radial-gradient(circle at top right, rgba(255,255,255,0.18), transparent 35%); */
+      pointer-events: none;
+    }
+
+    .blindbox-title {
+      font-size: 30px;
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+
+    .blindbox-desc {
+      text-align: center;
+      line-height: 1.8;
+      margin-bottom: 24px;
+      color: #aa5500;
+      z-index: 1;
+    }
+
+    .machine {
+      width: 260px;
+      height: 340px;
+      background: linear-gradient(180deg, #fcefd7, #dfb07c);
+      border-radius: 28px;
+      border: 8px solid #f6d2a9;
+      position: relative;
+      box-shadow: inset 0 0 0 4px #c27d44, 0 16px 28px rgba(0,0,0,0.2);
+      margin-bottom: 24px;
+      z-index: 1;
+      transform-origin: center bottom;
+    }
+
+    .machine.shaking {
+      animation: shake 0.8s ease-in-out;
+    }
+
+    .machine-top {
+      width: 170px;
+      height: 110px;
+      border-radius: 90px 90px 24px 24px;
+      background: rgba(255,255,255,0.45);
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid rgba(255,255,255,0.65);
+      overflow: hidden;
+    }
+
+    .capsules {
+      position: absolute;
+      inset: 12px;
+    }
+
+    .capsule {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: inset -5px -5px 0 rgba(0,0,0,0.08);
+    }
+
+    .capsule:nth-child(1) { top: 18px; left: 20px; background: #f9a826; }
+    .capsule:nth-child(2) { top: 24px; right: 18px; background: #ef476f; }
+    .capsule:nth-child(3) { bottom: 18px; left: 38px; background: #06d6a0; }
+    .capsule:nth-child(4) { bottom: 20px; right: 34px; background: #118ab2; }
+    .capsule:nth-child(5) { top: 40px; left: 78px; background: #ffd166; }
+
+    .slot {
+      width: 90px;
+      height: 18px;
+      background: #7a3e1d;
+      border-radius: 10px;
+      position: absolute;
+      bottom: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .handle-box {
+      position: absolute;
+      right: 18px;
+      top: 140px;
+      width: 18px;
+      height: 90px;
+      background: #f3c89a;
+      border-radius: 12px;
+    }
+
+    .handle-ball {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #d94f3d;
+      position: absolute;
+      right: -8px;
+      top: 128px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    }
+
+    .draw-btn {
+      z-index: 1;
+      background: #fff2dc;
+      color: #7a3e1d;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .draw-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px rgba(0,0,0,0.16);
+    }
+
+    .draw-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 99;
+    }
+
+    .modal.show {
+      display: flex;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .modal-content {
+      width: min(460px, 100%);
+      background: #fffaf4;
+      border-radius: 24px;
+      padding: 30px 28px;
+      text-align: center;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+      border: 1px solid #efdcc6;
+    }
+
+    .modal-content h3 {
+      font-size: 28px;
+      color: #8b3f19;
+      margin-bottom: 14px;
+    }
+
+    .modal-content p {
+      font-size: 18px;
+      line-height: 1.8;
+      color: #5e4433;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: #8b3f19;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    @keyframes shake {
+      0% { transform: rotate(0deg); }
+      20% { transform: rotate(-3deg); }
+      40% { transform: rotate(3deg); }
+      60% { transform: rotate(-2deg); }
+      80% { transform: rotate(2deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 980px) {
+      .main {
+        flex-direction: column;
+      }
+
+      .left-panel,
+      .right-panel {
+        width: 100%;
+      }
+
+      .artifact-image-wrap img {
+        height: 380px;
+      }
+    }
+	/* ========== 新增：返回首页按钮样式 ========== */
+	    .back-home-btn {
+	      position: absolute;
+	      top: 40px;
+	      left: 120px;
+	      z-index: 999; /* 确保按钮在最上层 */
+	      width: 180px;
+	      height: 60px;
+	      border: none;
+	      /* border-radius: 8px; */
+	      cursor: pointer;
+	      /* 核心：背景图片与文字分层 */
+	      display: flex;
+	      align-items: center;
+	      justify-content: center;
+	      font-size: 20px;
+	      font-weight: bold;
+	      color: #733900;
+	      text-decoration: none; /* 去掉a标签默认下划线 */
+	      overflow: hidden;
+	    }
+	
+	    /* 背景图层（单独用于旋转） */
+	    .btn-bg {
+	      position: absolute;
+	      top: 0;
+	      left: 0;
+	      width: 100%;
+	      height: 100%;
+	      background: url("img/017.png") no-repeat center center; /* 替换为你的按钮背景图 */
+	      background-size: cover;
+	     
+	      z-index: 1; /* 背景在文字下方 */
+	    }
+		
+		/* 单个图片样式 - 可独立调整位置/大小/层级 */
+		.layer-image {
+		    position: absolute;
+		    pointer-events: auto; /* 如需点击图片可保留，否则设为none */
+		    /* 基础样式，可根据图片调整 */
+		    width: 40px; /* 初始宽度，按需修改 */
+		    height: auto; /* 保持宽高比 */
+		    opacity: 1; /* 透明度，可选 */
+		    transition: all 0.3s ease; /* 调整时平滑过渡，可选 */
+		}
+		
+		/* 示例：给不同图片加类名，方便单独调整 */
+		.img-1 {
+		    top: 17%; /* 距离顶部百分比/像素 */
+		    left: 5%; /* 距离左侧百分比/像素 */
+		    z-index: 3; /* 可单独调整层级 */
+		}
+  </style>
+</head>
+<body>
+	<!-- 图片图层容器 - 独立于原有结构 -->
+		<div class="images-layer">
+		    <!-- 示例图片1：替换src为你的图片路径，调整类名对应CSS -->
+		    <img src="img/头像3.png" alt="装饰图片1" class="layer-image img-1">
+		    
+		</div>
+	<a href="导航.html" class="back-home-btn"> <!-- 替换index.html为你的首页地址 -->
+	  <div class="btn-bg"></div> <!-- 背景图层（旋转） -->
+	  <span class="btn-text">返回首页</span> <!-- 文字层（静止） -->
+	</a>
+  <div class="page">
+    <header class="header">
+      <h1>古物证史—笺寄风华</h1>
+    </header>
+
+    <main class="main">
+      <section class="left-panel">
+        <div class="post-card">
+          
+
+          <div class="artifact-copy" id="artifactText"></div>
+
+          <div class="artifact-image-wrap">
+            <button class="arrow-btn" id="prev" style="position:absolute;left:-60px;top:50%;transform:translateY(-50%)">⬅</button>
+            <img id="artifactImg" alt="文物展示图" />
+            <button class="arrow-btn" id="next" style="position:absolute;right:-60px;top:50%;transform:translateY(-50%)">➡</button>
+          </div>
+
+          <div class="toolbar">
+            <button class="action-btn" id="likeBtn" type="button">
+              <span class="heart" id="heartIcon">❤</span>
+              <span>点赞</span>
+            </button>
+            <span class="divider">|</span>
+            <button class="action-btn" id="commentBtn" type="button">
+              <span>💬</span>
+              <span>评论</span>
+            </button>
+          </div>
+
+          <div class="comment-box" id="commentBox">
+            <div class="comment-empty">点击“评论”可随机查看该文物的趣味评论，也可以发布自己的评论。</div>
+          </div>
+
+          <div class="comment-input-row">
+            <input id="commentInput" placeholder="写评论..." />
+            <button class="send-btn" id="sendBtn" type="button">发布</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="right-panel">
+        <h2 class="blindbox-title">宫廷文创盲盒机</h2>
+        <p class="blindbox-desc">
+          点击按钮摇动盲盒机，
+          随机解锁一份与你的文物之旅相配的明风文创。
+        </p>
+
+        <div class="machine" id="machine">
+          <div class="machine-top">
+            <div class="capsules">
+              <span class="capsule"></span>
+              <span class="capsule"></span>
+              <span class="capsule"></span>
+              <span class="capsule"></span>
+              <span class="capsule"></span>
+            </div>
+          </div>
+          <div class="handle-box"></div>
+          <!-- <div class="handle-ball"></div> -->
+          <div class="slot"></div>
+        </div>
+
+        <button class="draw-btn" id="drawBtn" type="button">点击抽取文创盲盒</button>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3>🎉 恭喜你！</h3>
+      <img id="rewardImg" style="width:120px;height:120px;object-fit:cover;margin-bottom:10px;border-radius:12px" />
+      <p id="rewardText">你获得了：宫廷纹样书签</p>
+      <button class="close-btn" id="closeBtn" type="button">我知道啦</button>
+    </div>
+  </div>
+
+  <script>
+    const likeBtn = document.getElementById('likeBtn');
+    const heartIcon = document.getElementById('heartIcon');
+    const commentBtn = document.getElementById('commentBtn');
+    const commentBox = document.getElementById('commentBox');
+    const drawBtn = document.getElementById('drawBtn');
+    const machine = document.getElementById('machine');
+    const modal = document.getElementById('modal');
+    const rewardText = document.getElementById('rewardText');
+    const rewardImg = document.getElementById('rewardImg');
+    const closeBtn = document.getElementById('closeBtn');
+
+    const artifactText = document.getElementById('artifactText');
+    const artifactImg = document.getElementById('artifactImg');
+    const indexText = document.getElementById('indexText');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+
+    const commentInput = document.getElementById('commentInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    let liked = false;
+    let current = 0;
+
+    const artifacts = [
+      {
+        name: '明赏赐梅瓶',
+        text: '【明赏赐梅瓶】明洪武白釉“赏赐”梅瓶，1995年南京明故宫社稷坛遗址古井出土，现藏南京博物院。肩部铁红楷书“赏赐”二字，是明初朱元璋开国时赏赐功臣的官窑重器，既是盛酒、插花的日常用器，也是等级身份的象征。',
+        img: 'img/文物1.png',
+        comments: [
+          '明故宫考古队：明故宫遗址出土的一级文物，洪武官窑孤品！',
+          '南京博物院藏：明初赏赐制度的实物铁证，太珍贵了！',
+          '明史研究员：白釉素雅却藏着帝王威严，明故宫的镇馆级宝贝！'
+        ],
+        userComments: []
+      },
+      {
+        name: '明宣德青花缠枝莲纹执壶',
+        text: '【明宣德青花缠枝莲纹执壶】官窑御用酒和茶具，通高15.3厘米，流部署“大明宣德年制”款，是“宣德年款遍器身”的典型代表。青花发色浓艳，器形优雅，是宫廷宴饮、日常斟酒的核心器具。',
+        img: 'img/文物2.png',
+        comments: [
+          '宫廷御膳房：永乐皇帝宴饮专用执壶，倒酒仪式感拉满！',
+          '古陶瓷学者：苏麻离青料发色典型，明初御窑青花标杆之作！',
+          '明宫起居注：宫中茶宴、酒局必备，是宫廷日常“标配”器具！'
+        ],
+        userComments: []
+      },
+      {
+        name: '青花云龙纹碗',
+        text: '【青花云龙纹碗】明宣德青花云龙纹碗，高10.2厘米，口径27.8厘米。碗外壁绘五爪云龙纹，口沿下横书“大明宣德年制”款，是皇家专属日用礼器，也是宣德朝宫廷筵宴、日常用餐的核心餐具，皇权象征拉满。',
+        img: 'img/文物3.png',
+        comments: [
+          '宫廷用瓷考：五爪龙纹唯皇帝可用，真正的御用餐具！',
+          '御窑档案：宣德朝大量烧造，是宫中日常吃饭的“大碗”！',
+          '历史爱好者：宣德青花名品，每一件都是教科书级别的存在！'
+        ],
+        userComments: []
+      },
+      {
+        name: '明洪武釉里红松竹梅纹玉壶春瓶',
+        text: '【明洪武釉里红松竹梅纹玉壶春瓶】宫廷御用瓷器，现藏故宫博物院。瓶身绘松、竹、梅“岁寒三友”，釉里红发色纯正，是明初釉里红工艺的巅峰之作，兼具陈设与实用价值。',
+        img: 'img/文物4.png',
+        comments: [
+          '文房御物：洪武朝宫廷文房标准器，文人风骨拉满！',
+          '御窑记事：釉里红为明初官窑高档品种，非民间可使用！',
+          '书法爱好者：用它插花，书房氛围感直接拉满，太有格调了！'
+        ],
+        userComments: []
+      },
+      {
+        name: '掐丝珐琅缠枝莲纹炉',
+        text: '【掐丝珐琅缠枝莲纹炉】明宣德掐丝珐琅缠枝莲纹炉，清宫旧藏。炉身以蓝釉为地，饰红、黄、白等色缠枝莲纹，铜鎏金龙首双耳，是宫廷书斋、寝殿焚香专用器，明代早期珐琅工艺的精品。',
+        img: 'img/文物5.png',
+        comments: [
+          '宫廷香具考：内府御用焚香之器，书斋、寝殿的“空气清新剂”！',
+          '珐琅工艺史：明代早期官造珐琅标准器，景泰蓝的前身！',
+          '香道文化：一炉清香，是明代文人的日常浪漫，氛围感绝了！'
+        ],
+        userComments: []
+      },
+      {
+        name: '明代金镶宝石头饰',
+        text: '【明代金镶宝石头饰】明代贵族妇女金镶宝石头饰，完整一套含挑心、掩鬓、顶簪等，金质主体镶嵌红宝石、蓝宝石、猫睛石等，造型华丽，是明代宫廷女性日常梳妆、佩戴的核心首饰，奢华感拉满。',
+        img: 'img/文物6.png',
+        comments: [
+          '明故宫考古队：明故宫遗址出土的后妃首饰，明代金器工艺巅峰！',
+          '服饰史学者：明代宫廷女性“顶流发饰”，日常梳妆必备！',
+          '古风爱好者：金镶宝石太奢华了，妥妥的明代“高定首饰”！'
+        ],
+        userComments: []
+      },
+      {
+        name: '剔红牡丹纹圆盘',
+        text: '【剔红牡丹纹圆盘】明永乐剔红牡丹纹圆盘，清宫旧藏。盘内外黄漆素地上雕朱漆牡丹花纹，5朵主花布局饱满，刀法圆润，是明代宫廷案头陈设、盛放果品和文玩的专用器具，也是明代漆器工艺代表之作。',
+        img: 'img/文物7.png',
+        comments: [
+          '漆器工艺师：明代剔红名品，宫廷专属工艺，民间禁止仿制！',
+          '宫廷陈设档：宫中案头必备陈设盘，红红火火寓意吉祥！',
+          '文物爱好者：雕工太细腻了，每一朵牡丹都栩栩如生！'
+        ],
+        userComments: []
+      },
+      {
+        name: '明代玉组佩',
+        text: '【明代玉组佩】明晚期玉组佩，通长53.6厘米，由53件玉饰串成。上部为寿星骑鹤玉纽，下悬4串玉叶、“卍”“寿”等镂件与玉文臣，佩戴于腰间，行走时玉饰相击发声，是明代宫廷礼仪、日常穿搭的核心配饰。',
+        img: 'img/文物8.png',
+        comments: [
+          '宫廷礼制考：明代帝王、贵族专属佩饰，行走有声，彰显礼仪！',
+          '玉器收藏家：明代玉组佩标准器，工艺精湛，玉质上乘！',
+          '明史爱好者：明代宫廷穿搭“灵魂配饰”，仪式感直接拉满！'
+        ],
+        userComments: []
+      },
+      {
+        name: '明白玉卧兽镇纸',
+        text: '【明白玉卧兽镇纸】和田白玉质，玉质温润细腻，雕工简练传神，卧兽造型憨态可掬。置于案头既可压纸，又是精致文房陈设雅玩，是明代内廷御用工匠的经典之作。',
+        img: 'img/文物9.png',
+        comments: [
+          '宫廷玉器录：内廷御用文房镇纸，玉料上乘，工艺精湛！',
+          '明宫造办处：皇家书房专属，案头必备“颜值担当”。',
+          '古风设计师：小巧精致，放在桌上太治愈了，文气瞬间拉满！'
+        ],
+        userComments: []
+      }
+    ];
+
+    function getCurrentArtifact() {
+      return artifacts[current];
+    }
+
+    function clearCommentsDisplay() {
+      commentBox.innerHTML = '<div class="comment-empty">点击“评论”可随机查看该文物的趣味评论，也可以发布自己的评论。</div>';
+    }
+
+    function createCommentElement(name, text, avatarUrl) {
+      const item = document.createElement('div');
+      item.className = 'comment-item';
+
+      const avatar = document.createElement('img');
+      avatar.className = 'comment-avatar';
+      avatar.src = avatarUrl;
+      avatar.alt = name;
+
+      const content = document.createElement('div');
+      content.className = 'comment-content';
+
+      const title = document.createElement('div');
+      title.className = 'comment-name';
+      title.textContent = name;
+
+      const body = document.createElement('div');
+      body.className = 'comment-text';
+      body.textContent = text;
+
+      content.appendChild(title);
+      content.appendChild(body);
+      item.appendChild(avatar);
+      item.appendChild(content);
+
+      return item;
+    }
+
+    function renderComments() {
+      const artifact = getCurrentArtifact();
+      const officialComments = artifact.officialShownComments || [];
+      const userComments = artifact.userComments || [];
+      commentBox.innerHTML = '';
+
+      const allComments = [...officialComments, ...userComments];
+      if (allComments.length === 0) {
+        clearCommentsDisplay();
+        return;
+      }
+
+      allComments.forEach((comment) => {
+        const el = createCommentElement(comment.name, comment.text, comment.avatar);
+        commentBox.appendChild(el);
+      });
+    }
+
+    function render() {
+        const artifact = getCurrentArtifact();
+        artifactText.innerText = artifact.text;
+        artifactImg.src = artifact.img;
+        artifactImg.alt = artifact.name;
+    
+        liked = false;
+        heartIcon.classList.remove('liked');
+    
+        // 切换文物时，评论区恢复默认提示语
+        clearCommentsDisplay();
+    
+        // 顺手清空输入框，体验更一致
+        commentInput.value = '';
+      }
+
+
+    function addOfficialComment() {
+      const artifact = getCurrentArtifact();
+      if (!artifact.officialShownComments) {
+        artifact.officialShownComments = [];
+      }
+
+      const randomIndex = Math.floor(Math.random() * artifact.comments.length);
+      const text = artifact.comments[randomIndex];
+
+      artifact.officialShownComments.push({
+        name: '趣味评论',
+        text,
+        avatar: 'img/头像1.png'
+      });
+
+      renderComments();
+    }
+
+    function addUserComment(text) {
+      const artifact = getCurrentArtifact();
+      artifact.userComments.push({
+        name: '游客2333',
+        text,
+        avatar: 'img/头像2.png'
+      });
+      renderComments();
+    }
+
+    prev.addEventListener('click', () => {
+      current = (current - 1 + artifacts.length) % artifacts.length;
+      render();
+    });
+
+    next.addEventListener('click', () => {
+      current = (current + 1) % artifacts.length;
+      render();
+    });
+
+    likeBtn.addEventListener('click', () => {
+      liked = !liked;
+      heartIcon.classList.toggle('liked', liked);
+    });
+
+    commentBtn.addEventListener('click', () => {
+      addOfficialComment();
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const text = commentInput.value.trim();
+      if (!text) return;
+      addUserComment(text);
+      commentInput.value = '';
+    });
+
+    commentInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+
+    const rewards = [
+      {name:'明白玉卧兽镇纸',img:'img/文创1.png'},
+      {name:'玉组配挂件',img:'img/文创2.png'},
+      {name:'掐丝珐琅缠枝莲纹炉摆件',img:'img/文创3.png'},
+      {name:'剔红牡丹纹圆徽章',img:'img/文创4.png'}
+      // {name:'鎏金花纹书签',img:'https://picsum.photos/200?205'},
+      // {name:'宫廷文创钥匙扣',img:'https://picsum.photos/200?206'}
+    ];
+
+    drawBtn.addEventListener('click', () => {
+      drawBtn.disabled = true;
+      machine.classList.add('shaking');
+
+      setTimeout(() => {
+        machine.classList.remove('shaking');
+        const reward = rewards[Math.floor(Math.random() * rewards.length)];
+        rewardText.textContent = '恭喜用户获得：' + reward.name;
+        rewardImg.src = reward.img;
+        modal.classList.add('show');
+        drawBtn.disabled = false;
+      }, 900);
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.classList.remove('show');
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+      }
+    });
+
+    function runTests() {
+      console.assert(Array.isArray(artifacts), 'artifacts 应为数组');
+      console.assert(artifacts.length === 9, '应有 9 件文物');
+      console.assert(artifacts.every(item => item.comments.length === 3), '每件文物应有 3 条评论');
+      console.assert(typeof addOfficialComment === 'function', 'addOfficialComment 应存在');
+      console.assert(typeof addUserComment === 'function', 'addUserComment 应存在');
+    }
+
+    runTests();
+    render();
+  </script>
+</body>
+</html>

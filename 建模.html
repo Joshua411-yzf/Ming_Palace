@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>明故宫奉天殿 3D交互展示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden; 
+            background: #f0f0f0;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        #container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative;
+        }
+        #infoPanel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        #switchBtn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #2c3e50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            z-index: 100;
+            transition: background 0.3s;
+        }
+        #switchBtn:hover {
+            background: #34495e;
+        }
+        /* 加载进度条样式 */
+        #loadingContainer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            text-align: center;
+            z-index: 99;
+        }
+        #loadingBar {
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        #loadingProgress {
+            height: 100%;
+            width: 0%;
+            background: #2c3e50;
+            transition: width 0.2s ease;
+        }
+        #loadingText {
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="container">
+        <div id="loadingContainer">
+            <div id="loadingText">模型加载中...</div>
+            <div id="loadingBar">
+                <div id="loadingProgress"></div>
+            </div>
+        </div>
+        <div id="infoPanel">点击模型查看构件名称</div>
+        <button id="switchBtn">切换到爆炸视图</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // 核心DOM元素
+        const container = document.getElementById('container');
+        const infoPanel = document.getElementById('infoPanel');
+        const switchBtn = document.getElementById('switchBtn');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const loadingProgress = document.getElementById('loadingProgress');
+        const loadingText = document.getElementById('loadingText');
+
+        // 模型路径
+        const MODEL_PATHS = {
+            full: 'model/fengtian.glb',
+            explode: 'model/fengtianexplode.glb'
+        };
+
+        // 全局状态
+        let currentScene = null;
+        let currentModel = null;
+        let isExplodeMode = false;
+        let camera, renderer, controls, raycaster, mouse;
+
+        // ==================== 精准构件名称映射 ====================
+        const PART_NAME_MAP = {
+            // 完整模型：大类精准映射
+            full: {
+                '斗拱': '斗拱',
+                '柱': '柱网',
+                '台基': '台基',
+                '装修': '门窗',
+                '梁架': '梁架',
+                '山花': '望板',
+                '椽架': '椽架',
+                '瓦作': '屋顶',
+                'tilegridbool': '屋顶',
+                'tilegrid': '屋顶',
+                '踏板': '台基',
+                '踏跺': '台基',
+                '槛窗': '门窗',
+                '隔扇': '门窗',
+                '雀替': '门窗',
+                '金枋': '梁架',
+                '额枋': '梁架',
+                '由戗': '椽架',
+                '翼角椽': '椽架',
+                '老角梁': '梁架',
+                '仔角梁': '梁架',
+                '飞椽': '椽架',
+                '屋瓦': '屋顶',
+                '正脊': '屋顶',
+                '垂兽': '屋顶',
+                '套兽': '屋顶',
+                '骑凤仙人': '屋顶',
+                '天马': '屋顶', 
+                '斗口重昂': '斗拱',
+                '柱头斗栱': '斗拱',
+                '补间斗栱': '斗拱',
+                '转角斗栱': '斗拱'
+            },
+            // 爆炸模型：具体构件精准映射
+            explode: {
+                '斗口重昂': '斗拱',
+                '柱头斗栱': '柱头斗拱',
+                '补间斗栱': '补间斗拱',
+                '转角斗栱': '转角斗拱',
+                '平板枋': '平板枋',
+                '井口枋': '井口枋',
+                '外拽枋': '外拽枋',
+                '正心枋': '正心枋',
+                '挑檐枋': '挑檐枋',
+                '拱垫板': '拱垫板',
+                '柱子': '木柱',
+                '金枋': '金枋',
+                '额枋': '额枋',
+                '由戗': '由戗',
+                '翼角椽': '翼角椽',
+                '老角梁': '老角梁',
+                '仔角梁': '仔角梁',
+                '飞椽': '飞椽',
+                '屋瓦': '屋瓦',
+                'tilegridbool': '屋顶瓦面',
+                'tilegrid': '屋顶瓦面',
+                '正脊': '正脊',
+                '垂兽': '垂兽',
+                '套兽': '套兽',
+                '骑凤仙人': '骑凤仙人',
+                '天马': '天马', 
+                '踏跺': '台阶',
+                '槛窗': '槛窗',
+                '隔扇': '隔扇门',
+                '雀替': '雀替',
+                '山花': '山花板',
+                '望板': '望板',
+                '椽架': '椽架',
+                '梁架': '梁架',
+                '台基': '台基',
+                '瓦作': '屋顶'
+            }
+        };
+
+        // ==================== 1. 初始化场景 ====================
+        function initScene() {
+            currentScene = new THREE.Scene();
+            currentScene.background = new THREE.Color(0xf0f0f0);
+
+            camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(1, 1, 1);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // 控制器：全功能自由操作
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.enableZoom = true;
+            controls.enablePan = true;
+            controls.enableRotate = true;
+            controls.minDistance = 2;
+            controls.maxDistance = 80;
+            controls.target.set(0, 3, 0);
+
+            // 光线：无黑块、清晰可见
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            currentScene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(15, 25, 20);
+            currentScene.add(dirLight);
+
+            // 射线检测
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // 窗口适配
+            window.addEventListener('resize', onWindowResize);
+
+            // 点击事件
+            container.addEventListener('click', onModelClick);
+
+            // 切换按钮
+            switchBtn.addEventListener('click', toggleModelMode);
+        }
+
+        // ==================== 2. 加载模型 ====================
+        function loadModel(modelPath) {
+            // 切换时自动清空
+            infoPanel.textContent = isExplodeMode ? '爆炸视图模式' : '完整模型模式';
+            
+            loadingProgress.style.width = '0%';
+            loadingText.textContent = '模型加载中...';
+            loadingContainer.style.display = 'block';
+
+            const loader = new GLTFLoader();
+
+            // 清理旧模型
+            if (currentModel) {
+                currentScene.remove(currentModel);
+                currentModel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.geometry.dispose();
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(m => m.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                });
+                currentModel = null;
+            }
+
+            loader.load(
+                modelPath,
+                (gltf) => {
+                    currentModel = gltf.scene;
+                    
+                    // 清除残留黑块/背景
+                    currentModel.traverse((child) => {
+                        if (child.isMesh) {
+                            const mat = child.material;
+                            if (mat) {
+                                const color = mat.color ? mat.color.getHex() : null;
+                                // 仅隐藏纯黑色/深灰色残留，不影响建筑主体
+                                if (color === 0x000000 || color === 0x111111) {
+                                    child.visible = false;
+                                }
+                            }
+                        }
+                        // 隐藏Blender导出时的默认相机/灯光
+                        if (child.type === 'PerspectiveCamera' || child.type === 'DirectionalLight') {
+                            child.visible = false;
+                        }
+                    });
+                    
+                    currentScene.add(currentModel);
+                    
+                    // 自动全局视角
+                    fitCameraToModel(currentModel);
+                    
+                    loadingContainer.style.display = 'none';
+                },
+                (xhr) => {
+                    const progress = Math.round((xhr.loaded / xhr.total) * 100);
+                    loadingProgress.style.width = `${progress}%`;
+                    loadingText.textContent = `模型加载中: ${progress}%`;
+                },
+                (error) => {
+                    console.error('加载失败:', error);
+                    loadingText.textContent = '模型加载失败';
+                }
+            );
+        }
+
+        // ==================== 3. 相机自动适配（初始全局视角） ====================
+        function fitCameraToModel(model) {
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+
+            camera.position.set(center.x + maxDim*0.8, center.y + maxDim*0.6, center.z + cameraZ*1.5);
+            controls.target.set(center.x, center.y, center.z);
+            camera.updateProjectionMatrix();
+            controls.update();
+        }
+
+        // ==================== 4. 点击显示构件名称 ====================
+        function onModelClick(event) {
+            if (!currentModel) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(currentModel.children, true);
+            if (intersects.length > 0) {
+                const clickedObj = intersects[0].object;
+                const objName = clickedObj.name;
+                let displayName = objName;
+
+                // 精准匹配，彻底解决tilegridbool乱码
+                const map = isExplodeMode ? PART_NAME_MAP.explode : PART_NAME_MAP.full;
+                
+                for (const [key, value] of Object.entries(map)) {
+                    if (objName.includes(key)) {
+                        displayName = value;
+                        break;
+                    }
+                }
+
+                // 彻底清除所有数字、特殊符号（包括-、#、_等）
+                displayName = displayName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+                infoPanel.textContent = `当前构件：${displayName}`;
+            }
+        }
+
+        // ==================== 5. 切换完整/爆炸模式（自动清空） ====================
+        function toggleModelMode() {
+            isExplodeMode = !isExplodeMode;
+            const path = isExplodeMode ? MODEL_PATHS.explode : MODEL_PATHS.full;
+            loadModel(path);
+            switchBtn.textContent = isExplodeMode ? '切换回完整模型' : '切换到爆炸视图';
+        }
+
+        // ==================== 6. 窗口大小适配 ====================
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ==================== 7. 渲染循环 ====================
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(currentScene, camera);
+        }
+
+        // 启动
+        initScene();
+        loadModel(MODEL_PATHS.full);
+        animate();
+    </script>
+</body>
+</html>

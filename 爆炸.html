@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>明故宫3D交互</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#121212;overflow:hidden;font-family:Microsoft YaHei;}
+
+#toggleBtn{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  padding:10px 22px;background:#222;color:#fff;border:none;border-radius:8px;
+  font-size:15px;cursor:pointer;z-index:999;
+}
+#tooltip{
+  position:fixed;background:#000000dd;color:#fff;padding:10px 14px;border-radius:6px;
+  display:none;pointer-events:none;z-index:999;max-width:300px;line-height:1.5;
+}
+</style>
+</head>
+<body>
+<button id="toggleBtn">切换为爆炸图</button>
+<div id="tooltip"></div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.158.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.158.0/examples/jsm/"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x121212);
+
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.01, 5000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.minDistance = 0.1;
+controls.maxDistance = 1000;
+
+const light = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(light);
+const sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.position.set(20,30,20);
+scene.add(sun);
+
+// 名称映射：自动提取干净中文名
+const nameMap = {
+  "斗拱": "斗拱",
+  "屋顶_主檐": "主屋顶",
+  "屋顶_下檐": "下屋檐",
+  "额枋_上层": "额枋",
+  "台基": "台基",
+  "正门": "正门",
+  "侧门": "侧门",
+  "侧窗": "侧窗",
+  "台阶_主": "主台阶",
+  "台阶_窄": "台阶",
+  "外装饰": "外装饰"
+};
+
+let modelNormal = null;
+let modelExplode = null;
+let isExplodeMode = false;
+let allMeshes = [];
+const loader = new GLTFLoader();
+
+// 加载完整模型，自动全局视角
+loader.load("./taihedian.glb", (gltf) => {
+  modelNormal = gltf.scene;
+  scene.add(modelNormal);
+  collectMeshes(modelNormal);
+
+  const box = new THREE.Box3().setFromObject(modelNormal);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  camera.position.set(center.x, center.y + size.y*0.3, size.z * 2.4);
+  controls.target.copy(center);
+  controls.update();
+});
+
+// 加载爆炸模型
+loader.load("./爆炸.glb", (gltf) => {
+  modelExplode = gltf.scene;
+  modelExplode.visible = false;
+  scene.add(modelExplode);
+  collectMeshes(modelExplode);
+});
+
+function collectMeshes(model) {
+  model.traverse(c => { if (c.isMesh) allMeshes.push(c); });
+}
+
+// 切换按钮
+const btn = document.getElementById("toggleBtn");
+btn.addEventListener("click", () => {
+  isExplodeMode = !isExplodeMode;
+  if (modelNormal) modelNormal.visible = !isExplodeMode;
+  if (modelExplode) modelExplode.visible = isExplodeMode;
+  btn.textContent = isExplodeMode ? "切换为完整图" : "切换为爆炸图";
+});
+
+// 点击事件：提取干净名称
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const tip = document.getElementById("tooltip");
+
+window.addEventListener("click", (e) => {
+  mouse.x = (e.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const inter = raycaster.intersectObjects(allMeshes);
+
+  if (inter.length > 0) {
+    const objName = inter[0].object.name;
+    // 自动提取干净名称：去掉.obj、序号，匹配核心名
+    let cleanName = objName.replace(".obj", "").split("_")[0];
+    // 匹配映射表，显示最终名称
+    const displayName = nameMap[cleanName] || cleanName;
+    
+    tip.innerHTML = `<strong>${displayName}</strong>`;
+    tip.style.display = "block";
+    tip.style.left = e.clientX + 10 + "px";
+    tip.style.top = e.clientY + 10 + "px";
+  } else {
+    tip.style.display = "none";
+  }
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (tip.style.display === "block") {
+    tip.style.left = e.clientX + 10 + "px";
+    tip.style.top = e.clientY + 10 + "px";
+  }
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
